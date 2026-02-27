@@ -1,8 +1,15 @@
+from dotenv import load_dotenv
+import os
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import shutil
 import uuid
 from pathlib import Path
+
+load_dotenv()
+
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
+MAX_FILE_SIZE_MB = int(os.getenv("MAX_FILE_SIZE_MB", 50))
 
 app = FastAPI(title="AI Music Transcriber")
 
