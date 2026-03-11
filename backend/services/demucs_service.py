@@ -4,6 +4,7 @@ Handles audio processing and file management.
 """
 
 import logging
+from models import job_store
 import subprocess
 import sys
 from pathlib import Path
@@ -33,6 +34,9 @@ def separate_stems(job_id: str, filename: str, file_extension: str) -> str:
     logger.info(f"Running Demucs on {audio_path}")
     
     try:
+        # Update status to processing
+        job_store.update_status(job_id, "processing_stems")
+
         # Use sys.executable to get the current Python (from venv)
         cmd = [
             sys.executable,
@@ -43,6 +47,8 @@ def separate_stems(job_id: str, filename: str, file_extension: str) -> str:
             "cuda",
             "-o",
             str(job_output_dir),
+            "--shifts",
+            "4",  # Instead of default 1
             str(audio_path),
         ]
         
@@ -50,9 +56,13 @@ def separate_stems(job_id: str, filename: str, file_extension: str) -> str:
         
         result = subprocess.run(cmd, check=True, capture_output=True, text=True)
         logger.info(f"Demucs completed successfully")
+
+        # Update status to ready
+        job_store.update_status(job_id, "stems_ready")
         
     except subprocess.CalledProcessError as e:
         logger.error(f"Demucs failed: {e.stderr}")
+        job_store.update_status(job_id, "failed", error_message=e.stderr)
         raise RuntimeError(f"Stem separation failed: {e.stderr}")
     except Exception as e:
         logger.error(f"Demucs error: {str(e)}")
