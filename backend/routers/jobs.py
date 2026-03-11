@@ -33,7 +33,7 @@ async def get_job_status(job_id: str):
     
     return job.to_dict()
 
-@router.post("jobs/{job_id}/process")
+@router.post("/jobs/{job_id}/process")
 async def process_job(job_id: str, background_tasks: BackgroundTasks):
     """
     Manually trigger stem separation for a job.
