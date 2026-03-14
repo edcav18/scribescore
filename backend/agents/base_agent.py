@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from dataclass import dataclass
+from dataclasses import dataclass
 from typing import Any
 import logging
 
@@ -43,8 +43,8 @@ class BaseAgent(ABC):
               Set this in __init__ of subclasses.
     """
 
-    def __init__(self, name: str):
-        self.name = name
+    def __init__(self):
+        self.name = self.__class__.__name__
         self.logger = logging.getLogger(self.__class__.__name__)
 
     @abstractmethod
