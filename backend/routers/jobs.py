@@ -5,7 +5,10 @@ Job management endpoints.
 import logging
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 
+from agents.pitch_correction_agent import PitchCorrectionAgent
 from models import job_store
+from pathlib import Path
+from services.basic_pitch_service import BasicPitchService
 from services.demucs_service import separate_stems
 
 router = APIRouter(prefix="/api", tags=["jobs"])
