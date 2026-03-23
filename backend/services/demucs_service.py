@@ -27,10 +27,6 @@ def separate_stems(job_id: str, filename: str, file_extension: str) -> str:
     if not audio_path.exists():
         raise FileNotFoundError(f"Uploaded file not found: {audio_path}")
     
-    # Create job-specific output directory
-    job_output_dir = SEPARATED_DIR / job_id
-    job_output_dir.mkdir(parents=True, exist_ok=True)
-    
     logger.info(f"Running Demucs on {audio_path}")
     
     try:
@@ -46,7 +42,7 @@ def separate_stems(job_id: str, filename: str, file_extension: str) -> str:
             "-d",
             "cuda",
             "-o",
-            str(job_output_dir),
+            str(SEPARATED_DIR),
             "--shifts",
             "4",  # Instead of default 1
             str(audio_path),
@@ -70,18 +66,16 @@ def separate_stems(job_id: str, filename: str, file_extension: str) -> str:
     
     # After Demucs completes, stems are in:
     # separated/{job_id}/htdemucs/{track_name}/
-    stems_dir = job_output_dir / "htdemucs"
+    stems_dir = SEPARATED_DIR / "htdemucs" / job_id
     
     if not stems_dir.exists():
         raise RuntimeError(f"Demucs output directory not found: {stems_dir}")
     
     # Find the track subdirectory
-    subdirs = list(stems_dir.iterdir())
-    if not subdirs:
-        raise RuntimeError(f"No stem subdirectories found in {stems_dir}")
+    stem_file = stems_dir / "other.wav"
+    if not stem_file.exists():
+        raise RuntimeError(f"Guitar stem not found: {stem_file}")
     
-    stems_path = subdirs[0]
+    logger.info(f"Stem separation complete. Stems at {stems_dir}")
     
-    logger.info(f"Stem separation complete. Stems at {stems_path}")
-    
-    return str(stems_path)
+    return str(stems_dir)
