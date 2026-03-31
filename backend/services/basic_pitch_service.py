@@ -52,9 +52,9 @@ class BasicPitchService:
             
             # basic-pitch returns (note_events, midi_data, contours)
             # note_events: list of (onset_sec, duration_sec, midi_pitch, confidence)
-            note_events, midi_data, contours = predict(audio_path, model_path=model_path)
-            
-            logger.info(f"basic-pitch extracted {len(note_events)} notes")
+            note_events, midi_data, contours = predict(audio_path)
+
+            logger.info(f"basic-pitch extracted notes")
             
             # Convert to music21 Score
             score = stream.Score()
@@ -64,23 +64,18 @@ class BasicPitchService:
             # Add time signature (4/4 for now — can be refined later)
             part.append(meter.TimeSignature('4/4'))
             
-            # Convert note_events to music21 Note objects
-            # note_events is shape (n_notes, 4) = [onset_sec, duration_sec, midi_pitch, confidence]
-            for onset_sec, duration_sec, midi_pitch, confidence in note_events:
-                # Convert MIDI pitch number to music21 pitch
-                # MIDI 60 = C4, 69 = A4, etc.
-                try:
-                    n = note.Note(midi=int(midi_pitch))
-                    # Approximate duration in quarter notes
-                    # Assume 120 BPM = 0.5 sec per quarter note
-                    # duration_sec / 0.5 = quarter notes
-                    n.quarterLength = duration_sec / 0.5
+            # note_events is a dict with 'note', 'onset', 'contour' keys
+            # Each value is a numpy array of shape (time_frames, frequency_bins)
+            # This is raw spectrogram data, not parsed note events
+            # We need to use midi_data instead, which is the actual MIDI representation
+
+            # For now, use a simpler approach: just convert midi_data to notes
+            if midi_data is not None:
+                for note_obj in midi_data.instruments[0].notes:
+                    n = note.Note(midi=note_obj.pitch)
+                    n.quarterLength = note_obj.duration
                     part.append(n)
-                except ValueError:
-                    # Skip invalid MIDI pitches (shouldn't happen but be defensive)
-                    logger.warning(f"Skipping invalid MIDI pitch: {midi_pitch}")
-                    continue
-            
+
             score.append(part)
             return score
         
