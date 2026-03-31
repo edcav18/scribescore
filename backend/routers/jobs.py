@@ -57,7 +57,6 @@ async def process_job(job_id: str, background_tasks: BackgroundTasks):
     
     # Extract filename and extension from job.filename
     # job.filename is the original filename (e.g., "song.mp3")
-    from pathlib import Path
     file_path = Path(job.filename)
     filename_no_ext = file_path.stem
     extension = file_path.suffix
@@ -69,3 +68,44 @@ async def process_job(job_id: str, background_tasks: BackgroundTasks):
         filename_no_ext,
         extension
     )
+
+@router.post("/jobs/{job_id}/audio-to-midi")
+async def audio_to_midi(job_id: str):
+    job = job_store.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    stem_path = Path("separated") / "htdemucs" / job_id / "other.mp3"
+
+    if not stem_path.exists():
+        raise HTTPException(status_code=400, detail= "Stem file not found")
+    
+    score = BasicPitchService.extract_midi_from_audio(str(stem_path))
+    midi_dict = BasicPitchService.score_to_dict(score)
+
+    job.midi = midi_dict
+    job_store.update(job_id, job)
+    
+    return {"status": "success", "midi_notes": len(job.midi["notes"])}
+    
+    
+
+
+
+@router.post("/jobs/{job_id}/pitch-correction")
+async def correct_pitch(job_id: str):
+    job = job_store.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    if not job.midi:
+        raise HTTPException(status_code=400, detail="MIDI not extracted yet. Run audio-to-midi first.")
+    
+    agent = PitchCorrectionAgent(use_mock=True)
+
+    result = agent.process(job.midi)
+
+    job.pitch_correction_result = result.to_dict()
+    job_store.update(job_id, job)
+
+    return {"status": "success", "confidence": result.confidence}
