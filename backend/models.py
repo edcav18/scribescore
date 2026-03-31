@@ -6,6 +6,7 @@ Week 2: In-memory only. Week 3: Migrate to SQLite.
 from dataclasses import dataclass
 from typing import Optional
 from datetime import datetime, UTC
+from pathlib import Path
 
 
 @dataclass
@@ -16,6 +17,8 @@ class Job:
     created_at: str
     updated_at: str
     error_message: Optional[str] = None
+    midi: Optional[dict] = None
+    pitch_correction_result: Optional[dict] = None
 
     def to_dict(self):
         """Convert to dictionary for JSON responses."""
@@ -63,6 +66,30 @@ class JobStore:
             job.error_message = error_message
 
         return job
+    
+    def update(self, job_id, job):
+        """Update an existing job in the store."""
+        if job_id not in self.jobs:
+            raise ValueError(f"Job {job_id} not found")
+        self.jobs[job_id] = job
+
+    def load_from_disk(self):
+        """Load jobs that exist on disk."""
+        separated_dir = Path("separated/htdemucs")
+        if not separated_dir.exists():
+            return
+        
+        for job_folder in separated_dir.iterdir():
+            if job_folder.is_dir():
+                job_id = job_folder.name
+                if job_id not in self.jobs:
+                    self.jobs[job_id] = Job(
+                        job_id=job_id,
+                        filename="recovered",
+                        status="stems_ready",
+                        created_at="unknown",
+                        updated_at="unknown",
+                    )
 
 
 # Global store instance
