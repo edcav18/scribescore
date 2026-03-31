@@ -93,11 +93,11 @@ class PitchCorrectionAgent(BaseAgent):
                 notes: Summary of corrections applied
         """
         try:
-            notes = input.data.get("notes", [])
+            notes = input_data.get("notes", [])
             if not notes:
                 # Empty input — still valid, just return empty output
                 return AgentResult(
-                    input_data=input.data,
+                    input_data=input_data,
                     output_data={
                         "corrected_notes": [],
                         "corrections": []

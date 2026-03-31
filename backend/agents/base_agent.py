@@ -25,6 +25,14 @@ class AgentResult:
         if not (0.0 <= self.confidence <= 1.0):
             raise ValueError("Confidence must be between 0.0 and 1.0")
     
+    def to_dict(self):
+        return {
+            "input_data": self.input_data,
+            "output_data": self.output_data,
+            "confidence": self.confidence,
+            "notes": self.notes,
+        }
+    
 class BaseAgent(ABC):
     """
     Abstract base class for all transcription pipeline agents.
