@@ -3,6 +3,7 @@ import os
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from models import job_store
 
 # Import routers
 from routers import uploads, jobs
@@ -11,6 +12,9 @@ from routers import uploads, jobs
 logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(title="AI Music Transcriber")
+
+# Load existing jobs from disk
+job_store.load_from_disk()
 
 # CORS middleware
 app.add_middleware(
