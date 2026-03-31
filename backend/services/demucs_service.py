@@ -72,7 +72,7 @@ def separate_stems(job_id: str, filename: str, file_extension: str) -> str:
         raise RuntimeError(f"Demucs output directory not found: {stems_dir}")
     
     # Find the track subdirectory
-    stem_file = stems_dir / "other.wav"
+    stem_file = stems_dir / "other.mp3"
     if not stem_file.exists():
         raise RuntimeError(f"Guitar stem not found: {stem_file}")
     
